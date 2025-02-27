@@ -1,11 +1,98 @@
-const UpdateItem = ({ item }) => {
+import React , {useState} from 'react'
+
+const API_URI = `http://${import.meta.env.VITE_API_URI}/doors`;
+
+const UpdateItem = ({ item, setItem }) => {
     // 1. Create a state for the form
     // 2. Create a function to handle the form submission
     // 3. Create a function to handle the form input changes
 
     // your code here
-    return null;
-};
 
-export default UpdateItem;
+    const [formData,setFormData]=useState({
+        name:item.name || '',
+        description: item.description || '',
+    })
+
+
+    const [updating, setUpdating] = useState(false)
+    const [updateError, setUpdateError] = useState(null)
+    const [successMessage, setSuccessMessage] = useState(null)
+
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target
+        setFormData(prevData => ({
+            ...prevData,
+            [name]: value
+        }))
+    }
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        setUpdating(true)
+        setUpdateError(null)
+        setSuccessMessage(null)
+
+        try {
+            const response = await fetch(`${API_URI}/${item.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Update failed: ${response.status} ${response.statusText}`)
+            }
+
+            const updatedItem = await response.json();
+            setItem(updatedItem);
+            setSuccessMessage('Item updated successfully!')
+        } catch (err) {
+            setUpdateError(err.message);
+        } finally {
+            setUpdating(false)
+        }
+    };
+
+    return (
+        <div>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label htmlFor="name">Name:</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required
+                    />
+                </div>
+                <div>
+                    <label htmlFor="description">Description:</label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        required
+                    ></textarea>
+                </div>
+
+                <button type="submit" disabled={updating}>
+                    {updating ? 'Updating...' : 'Update'}
+                </button>
+            </form>
+
+            
+            {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
+            {updateError && <p style={{ color: 'red' }}>{updateError}</p>}
+        </div>
+    )
+}
+
+export default UpdateItem
 
